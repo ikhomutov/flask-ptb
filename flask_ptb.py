@@ -4,9 +4,8 @@
 import logging
 
 from flask import current_app
-from flask import request
 from flask import jsonify
-
+from flask import request
 from telegram import Bot
 from telegram import Update
 from telegram.error import TelegramError
