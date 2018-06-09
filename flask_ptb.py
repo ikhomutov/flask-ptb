@@ -6,6 +6,7 @@ import logging
 from flask import current_app
 from flask import jsonify
 from flask import request
+from flask.config import Config
 from telegram import Bot
 from telegram import Update
 from telegram.error import TelegramError
@@ -20,26 +21,27 @@ BOT_MODES = (WEBHOOK, POLLING)
 
 def webhook():
     """Метод обрабатывающий обновления от Телеграма"""
-    print('Load request data')
+    ptb = current_app.ptb
+    ptb.logger.debug('Load request data')
     data = request.get_json(force=True)
-    print('Request data: ')
-    print(data)
+    ptb.logger.debug('Request data: ')
+    ptb.logger.debug(data)
     try:
-        print('Retrieving update object')
+        ptb.logger.debug('Retrieving update object')
         update = Update.de_json(data, current_app.ptb.bot)
-        print(update)
-        current_app.ptb.dispatcher.process_update(update)
-        print('Process update {}'.format(update))
+        ptb.logger.debug(update)
+        ptb.dispatcher.process_update(update)
+        ptb.logger.debug('Process update %', update)
     except TelegramError as error:
-        print('TelegramError was raised while processing Update')
-        current_app.ptb.dispatcher.dispatchError(update, error)
+        ptb.logger.error('TelegramError was raised while processing Update')
+        ptb.dispatcher.dispatchError(update, error)
     return jsonify({})
 
 
 class TelegramBot(object):
     """Основной класс бота, отвечающий за всю интеграцию с Flask"""
 
-    def __init__(self, app=None):
+    def __init__(self, app=None, config=None):
         """Инициализация класса"""
         self.bot = None
         self.updater = None
@@ -48,29 +50,37 @@ class TelegramBot(object):
         self.logger = logging.getLogger(__name__)
 
         if app is not None:
-            self.init_app(app)
+            self.init_app(app, config)
 
-    def init_app(self, app):
+    def init_app(self, app, config=None):
         """Настройка и запуск бота исходя из конфига в приложении Flask"""
-        app.ptb = self
-        token = app.config['TELEGRAM_TOKEN']
+        ptb_config = app.config
+        if config is not None:
+            if not isinstance(config, Config):
+                self.logger.warning(
+                    'Configuration object should be instance of '
+                    'flask.config.Config class.')
+            else:
+                ptb_config = config
+
+        token = ptb_config['TELEGRAM_TOKEN']
         if not token:
             self.logger.error('TOKEN for TelegramBot is not provided!')
             return
-        bot_mode = app.config['TELEGRAM_BOT_MODE']
+        bot_mode = ptb_config['TELEGRAM_BOT_MODE']
         if not bot_mode or bot_mode not in BOT_MODES:
             bot_mode = POLLING
             self.logger.warning(
                 'TELEGRAM_BOT_MODE does not specified, or does not correct. '
                 'Used POLLING by default')
         if bot_mode == WEBHOOK:
-            site_url = app.config['SITE_URL']
+            site_url = ptb_config['TELEGRAM_WEBHOOK_URL']
             if not site_url:
-                raise RuntimeError(
-                    'You should provide proper SITE_URL to use WEBHOOK mode')
-            webhook_prefix = app.config('TELEGRAM_WEBHOOK_PREFIX', '/webhook')
+                raise Exception('You should provide proper '
+                                'TELEGRAM_WEBHOOK_URL to use WEBHOOK mode')
+            webhook_prefix = ptb_config('TELEGRAM_WEBHOOK_PREFIX', '/webhook')
             webhook_url = u'{hook_url}{hook_prefix}'.format(
-                hook_url=app.config['SITE_URL'],
+                hook_url=site_url,
                 hook_prefix=webhook_prefix)
 
             # Регистрация адреса получения вэбхука
@@ -79,18 +89,22 @@ class TelegramBot(object):
 
             self.initialize_webhook_bot(token, webhook_url)
         else:
-            if app.config['TELEGRAM_PROXY_URL']:
+            if ptb_config['TELEGRAM_PROXY_URL']:
                 request_kwargs = {
-                    'proxy_url': app.config['TELEGRAM_PROXY_URL'],
+                    'proxy_url': ptb_config['TELEGRAM_PROXY_URL'],
                     'urllib3_proxy_kwargs': {
-                        'username': app.config['TELEGRAM_PROXY_USERNAME'],
-                        'password': app.config['TELEGRAM_PROXY_PASSWORD'],
+                        'username': ptb_config['TELEGRAM_PROXY_USERNAME'],
+                        'password': ptb_config['TELEGRAM_PROXY_PASSWORD'],
                     },
                 }
             else:
                 request_kwargs = None
 
             self.initialize_polling_bot(token, request_kwargs)
+
+        # Привязываем текущего бота к приложению для корректной обработки
+        # принятого через вэбхук обновления
+        app.ptb = self
 
     def initialize_webhook_bot(self, token, webhook_url):
         """Настройка бота, принимающие обновления через вэбхуки"""
@@ -116,6 +130,7 @@ class TelegramBot(object):
         )
         self.logger.debug('Updater initialized')
         self.bot = self.updater.bot
+        self.dispatcher = self.updater.dispatcher
         self.logger.debug('Deleting webhook...')
         self.bot.delete_webhook()
         self.logger.debug('Webhook deleted')
@@ -127,4 +142,4 @@ class TelegramBot(object):
     def add_handler(self, method, *args, **kwargs):
         """Регистрация хендлера с уведомлением"""
         self.dispatcher.add_handler(method, *args, **kwargs)
-        print('Handler {} added'.format(repr(method)))
+        self.logger.info('Handler % added', repr(method))
