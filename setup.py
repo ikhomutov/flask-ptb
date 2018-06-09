@@ -7,7 +7,6 @@ Flask-PythonTelegramBot long description
 
 Links
 `````
-* `documentation <https://flask-login.readthedocs.io/en/latest/>`_
 * `development version <https://github.com/iskhomutov/flask-ptb>`_
 """
 from setuptools import setup
@@ -15,7 +14,9 @@ from setuptools import setup
 setup(
     name='Flask-PythonTelegramBot',
     version='0.0.1',
-    url='http://github.com/iskhomutov/flask-ptb',
+    url='https://github.com/iskhomutov/flask-ptb',
+    download_url=(
+        'https://github.com/iskhomutov/flask-ptb/archive/0.0.1.tar.gz'),
     license='MIT',
     author='Ivan Khomutov',
     author_email='iskhomutov@gmail.com',
