@@ -21,7 +21,7 @@ setup(
     author_email='iskhomutov@gmail.com',
     description='python-telegram-bot integration with Flask',
     long_description=__doc__,
-    packages=['flask_ptb'],
+    py_modules=['flask_ptb'],
     zip_safe=False,
     platforms='any',
     install_requires=[
