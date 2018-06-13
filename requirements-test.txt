@@ -1,4 +1,5 @@
 -r requirements.txt
+pytest
 flake8
 pylint
 pep257

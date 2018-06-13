@@ -13,10 +13,16 @@ from telegram.error import TelegramError
 from telegram.ext import Dispatcher
 from telegram.ext import Updater
 
+
 WEBHOOK = 'WEBHOOK'
 POLLING = 'POLLING'
 
 BOT_MODES = (WEBHOOK, POLLING)
+
+
+class PTBConfigException(Exception):
+    """Исключение выбрасываемое если переданы неправильные параметры конфига"""
+    pass
 
 
 def webhook():
@@ -63,22 +69,23 @@ class TelegramBot(object):
             else:
                 ptb_config = config
 
-        token = ptb_config['TELEGRAM_TOKEN']
+        token = ptb_config.get('TELEGRAM_TOKEN')
         if not token:
-            self.logger.error('TOKEN for TelegramBot is not provided!')
-            return
-        bot_mode = ptb_config['TELEGRAM_BOT_MODE']
+            raise PTBConfigException
+        bot_mode = ptb_config.get('TELEGRAM_BOT_MODE')
         if not bot_mode or bot_mode not in BOT_MODES:
             bot_mode = POLLING
             self.logger.warning(
                 'TELEGRAM_BOT_MODE does not specified, or does not correct. '
                 'Used POLLING by default')
         if bot_mode == WEBHOOK:
-            site_url = ptb_config['TELEGRAM_WEBHOOK_URL']
+            site_url = ptb_config.get('TELEGRAM_WEBHOOK_URL')
             if not site_url:
-                raise Exception('You should provide proper '
-                                'TELEGRAM_WEBHOOK_URL to use WEBHOOK mode')
-            webhook_prefix = ptb_config('TELEGRAM_WEBHOOK_PREFIX', '/webhook')
+                raise PTBConfigException
+                # raise Exception('You should provide proper '
+                #                 'TELEGRAM_WEBHOOK_URL to use WEBHOOK mode')
+            webhook_prefix = ptb_config.get(
+                'TELEGRAM_WEBHOOK_PREFIX', '/webhook')
             webhook_url = u'{hook_url}{hook_prefix}'.format(
                 hook_url=site_url,
                 hook_prefix=webhook_prefix)
@@ -89,12 +96,12 @@ class TelegramBot(object):
 
             self.initialize_webhook_bot(token, webhook_url)
         else:
-            if ptb_config['TELEGRAM_PROXY_URL']:
+            if ptb_config.get('TELEGRAM_PROXY_URL'):
                 request_kwargs = {
-                    'proxy_url': ptb_config['TELEGRAM_PROXY_URL'],
+                    'proxy_url': ptb_config.get('TELEGRAM_PROXY_URL'),
                     'urllib3_proxy_kwargs': {
-                        'username': ptb_config['TELEGRAM_PROXY_USERNAME'],
-                        'password': ptb_config['TELEGRAM_PROXY_PASSWORD'],
+                        'username': ptb_config.get('TELEGRAM_PROXY_USERNAME'),
+                        'password': ptb_config.get('TELEGRAM_PROXY_PASSWORD'),
                     },
                 }
             else:
