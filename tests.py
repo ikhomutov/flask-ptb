@@ -8,12 +8,15 @@ from flask_ptb import PTBConfigException
 from flask_ptb import TelegramBot
 
 
+class TestConfig(object):
+    TELEGRAM_TOKEN = '123:abcd'
+
+
 def test_empty_constructor():
     """Тест конструктора без параметров"""
     ptb = TelegramBot()
     assert ptb.bot is None
     assert ptb.dispatcher is None
-    assert ptb.updater is None
 
 
 def test_wrong_config():
@@ -22,3 +25,13 @@ def test_wrong_config():
     ptb = TelegramBot()
     with pytest.raises(PTBConfigException):
         ptb.init_app(app)
+
+
+def test_init_bot():
+    app = Flask(__name__)
+    app.config.from_object(TestConfig)
+    ptb = TelegramBot()
+    ptb.config = app.config
+    ptb.init_bot()
+    assert ptb.bot is not None
+    assert ptb.bot.token == TestConfig.TELEGRAM_TOKEN
