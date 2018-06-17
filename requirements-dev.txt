@@ -1,0 +1,4 @@
+-r requirements-test.txt
+PySocks
+python-dotenv
+ipython
