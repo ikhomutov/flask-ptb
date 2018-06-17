@@ -13,10 +13,10 @@ from setuptools import setup
 
 setup(
     name='Flask-PythonTelegramBot',
-    version='0.0.1',
+    version='0.0.2',
     url='https://github.com/iskhomutov/flask-ptb',
     download_url=(
-        'https://github.com/iskhomutov/flask-ptb/archive/0.0.1.tar.gz'),
+        'https://github.com/iskhomutov/flask-ptb/archive/0.0.2.tar.gz'),
     license='MIT',
     author='Ivan Khomutov',
     author_email='iskhomutov@gmail.com',
