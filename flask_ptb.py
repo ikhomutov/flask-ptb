@@ -70,21 +70,21 @@ class TelegramBot(object):
                 'Used POLLING by default')
         if bot_mode == WEBHOOK:
             self.dispatcher = Dispatcher(self.bot, None)
-            site_url = self.config.get('TELEGRAM_WEBHOOK_URL')
-            if not site_url:
+            site_domain = self.config.get('TELEGRAM_WEBHOOK_DOMAIN')
+            if not site_domain:
                 raise PTBConfigException
                 # raise Exception('You should provide proper '
                 #                 'TELEGRAM_WEBHOOK_URL to use WEBHOOK mode')
-            webhook_prefix = self.config.get(
-                'TELEGRAM_WEBHOOK_PREFIX', '/webhook')
-            webhook_url = u'{hook_url}{hook_prefix}'.format(
-                hook_url=site_url,
-                hook_prefix=webhook_prefix)
+            hook_route = self.config.get(
+                'TELEGRAM_WEBHOOK_ROUTE', '/webhook')
+            webhook_url = u'{hook_domain}{hook_route}'.format(
+                hook_domain=site_domain,
+                hook_route=hook_route)
             self.bot.setWebhook(webhook_url)
 
             # Регистрация адреса получения вэбхука
             app.add_url_rule(
-                webhook_prefix, 'webhook', webhook, methods=['POST'])
+                hook_route, 'webhook', webhook, methods=['POST'])
 
         else:
             self.start_polling()
@@ -107,7 +107,7 @@ class TelegramBot(object):
                 'username': self.config.get('TELEGRAM_PROXY_USERNAME'),
                 'password': self.config.get('TELEGRAM_PROXY_PASSWORD'),
             }
-            # Проверяем не прописаны ли в самом адресе данные юзер и пароль
+            # Проверяем не прописаны ли в самом адресе юзер и пароль
             auth_part = parse_url(proxy_url).auth
             if auth_part and len(auth_part) == 2:
                 username, password = auth_part
@@ -129,6 +129,6 @@ class TelegramBot(object):
         self.logger.debug('Pooling started')
 
     def add_handler(self, method, *args, **kwargs):
-        """Регистрация хендлера с уведомлением"""
+        """Регистрация хендлера с логированием"""
         self.dispatcher.add_handler(method, *args, **kwargs)
         self.logger.info('Handler % added', repr(method))
