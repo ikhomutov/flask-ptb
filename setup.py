@@ -8,6 +8,7 @@ Flask-PythonTelegramBot long description
 Links
 `````
 * `development version <https://github.com/iskhomutov/flask-ptb>`_
+* `documentation <https://flask-ptb.readthedocs.io/en/stable/`_
 """
 from setuptools import setup
 
@@ -36,6 +37,7 @@ setup(
         'Operating System :: OS Independent',
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
         'Topic :: Software Development :: Libraries :: Python Modules',
+        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
